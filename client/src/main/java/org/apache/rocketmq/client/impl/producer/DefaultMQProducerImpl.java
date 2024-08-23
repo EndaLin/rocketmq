@@ -232,14 +232,24 @@ public class DefaultMQProducerImpl implements MQProducerInner {
     public void start(final boolean startFactory) throws MQClientException {
         switch (this.serviceState) {
             case CREATE_JUST:
+                /**
+                 * 启动之前，先默认失败，悲观原则？
+                 */
                 this.serviceState = ServiceState.START_FAILED;
 
                 this.checkConfig();
 
+                /**
+                 * 建议将该逻辑封装到getInstanceName方法中
+                 */
                 if (!this.defaultMQProducer.getProducerGroup().equals(MixAll.CLIENT_INNER_PRODUCER_GROUP)) {
                     this.defaultMQProducer.changeInstanceNameToPID();
                 }
 
+                /**
+                 * Client Instance 是单例模式，Client Id是${IP 地址}@${InstanceName}
+                 * @see org.apache.rocketmq.client.ClientConfig#buildMQClientId()
+                 */
                 this.mQClientFactory = MQClientManager.getInstance().getOrCreateMQClientInstance(this.defaultMQProducer, rpcHook);
 
                 boolean registerOK = mQClientFactory.registerProducer(this.defaultMQProducer.getProducerGroup(), this);

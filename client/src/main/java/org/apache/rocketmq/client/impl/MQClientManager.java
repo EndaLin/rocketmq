@@ -48,8 +48,12 @@ public class MQClientManager {
         return getOrCreateMQClientInstance(clientConfig, null);
     }
     public MQClientInstance getOrCreateMQClientInstance(final ClientConfig clientConfig, RPCHook rpcHook) {
+        /**
+         * 通过clientId在Local Table中获取实例
+         */
         String clientId = clientConfig.buildMQClientId();
         MQClientInstance instance = this.factoryTable.get(clientId);
+
         if (null == instance) {
             instance =
                 new MQClientInstance(clientConfig.cloneClientConfig(),

@@ -66,10 +66,10 @@ public class AclClient {
                 {
                     Message msg = new Message("TopicTest",
                         "TagA",
-                        "OrderID188",
-                        "Hello world".getBytes(RemotingHelper.DEFAULT_CHARSET));
+                        "OrderID-" + i,
+                            ("Hello world-" + i).getBytes(RemotingHelper.DEFAULT_CHARSET));
                     SendResult sendResult = producer.send(msg);
-                    System.out.printf("%s%n", sendResult);
+                    System.out.printf("Send:%s%n", sendResult);
                 }
 
             } catch (Exception e) {

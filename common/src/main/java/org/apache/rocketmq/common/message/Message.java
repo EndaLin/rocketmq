@@ -26,6 +26,9 @@ public class Message implements Serializable {
     private static final long serialVersionUID = 8445773977080406428L;
 
     private String topic;
+    /**
+     * 完全由我们在使用的时候自己设定，RocketMQ 并不关心，打开也可以理解为就是透传
+     */
     private int flag;
     private Map<String, String> properties;
     private byte[] body;

@@ -343,11 +343,22 @@ public class DefaultMQProducer extends ClientConfig implements MQProducer {
      */
     @Override
     public void start() throws MQClientException {
-        this.setProducerGroup(withNamespace(this.producerGroup));
+        /**
+         * 消费者组，用来做不同业务场景的消息隔离
+         */
+        this.setProducerGroup(this.withNamespace(this.producerGroup));
+        /**
+         * 启动逻辑
+         */
         this.defaultMQProducerImpl.start();
+
         if (this.produceAccumulator != null) {
             this.produceAccumulator.start();
         }
+
+        /**
+         * 消息追踪，看着比较有意思，后面看看源码
+         */
         if (enableTrace) {
             try {
                 AsyncTraceDispatcher dispatcher = new AsyncTraceDispatcher(producerGroup, TraceDispatcher.Type.PRODUCE, traceTopic, rpcHook);
