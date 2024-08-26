@@ -29,7 +29,9 @@ public class TopicPublishInfo {
     private boolean orderTopic = false;
     private boolean haveTopicRouterInfo = false;
     private List<MessageQueue> messageQueueList = new ArrayList<>();
+    // 选择发送的Queue
     private volatile ThreadLocalIndex sendWhichQueue = new ThreadLocalIndex();
+    // Topic 的路由信息
     private TopicRouteData topicRouteData;
 
     public interface QueueFilter {
@@ -83,8 +85,11 @@ public class TopicPublishInfo {
 
         if (filter != null && filter.length != 0) {
             for (int i = 0; i < messageQueueList.size(); i++) {
+                // 轮询
                 int index = Math.abs(sendQueue.incrementAndGet() % messageQueueList.size());
                 MessageQueue mq = messageQueueList.get(index);
+
+                // 不使用指定队列
                 boolean filterResult = true;
                 for (QueueFilter f: filter) {
                     Preconditions.checkNotNull(f);
