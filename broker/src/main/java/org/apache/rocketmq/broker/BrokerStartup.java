@@ -131,6 +131,7 @@ public class BrokerStartup {
             try {
                 String[] addrArray = namesrvAddr.split(";");
                 for (String addr : addrArray) {
+                    // 仅校验用
                     NetworkUtil.string2SocketAddress(addr);
                 }
             } catch (Exception e) {

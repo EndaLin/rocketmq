@@ -772,6 +772,7 @@ public class BrokerController {
     }
 
     public boolean initializeMetadata() {
+        // 判断各个组件有没有初始化完成的思路值得学习
         boolean result = this.topicConfigManager.load();
         result = result && this.topicQueueMappingManager.load();
         result = result && this.consumerOffsetManager.load();

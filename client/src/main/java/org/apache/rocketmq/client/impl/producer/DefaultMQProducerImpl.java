@@ -728,7 +728,7 @@ public class DefaultMQProducerImpl implements MQProducerInner {
                 if (times > 0) {
                     resetIndex = true;
                 }
-                // 选择Queue投递
+                // 选择Queue投递，通过Broker Name + Queue ID可以确认为一一个Message Queue
                 MessageQueue mqSelected = this.selectOneMessageQueue(topicPublishInfo, lastBrokerName, resetIndex);
                 if (mqSelected != null) {
                     mq = mqSelected;
