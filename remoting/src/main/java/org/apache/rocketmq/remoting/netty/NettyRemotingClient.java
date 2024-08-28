@@ -685,6 +685,7 @@ public class NettyRemotingClient extends NettyRemotingAbstract implements Remoti
         if (this.lockChannelTables.tryLock(LOCK_TIMEOUT_MILLIS, TimeUnit.MILLISECONDS)) {
             try {
                 cw = this.channelTables.get(addr);
+                // double check
                 if (cw != null) {
                     if (cw.isOK() || !cw.getChannelFuture().isDone()) {
                         return cw.getChannelFuture();
@@ -747,8 +748,7 @@ public class NettyRemotingClient extends NettyRemotingAbstract implements Remoti
     }
 
     @Override
-    public void invokeOneway(String addr, RemotingCommand request, long timeoutMillis) throws InterruptedException,
-        RemotingConnectException, RemotingTooMuchRequestException, RemotingTimeoutException, RemotingSendRequestException {
+    public void invokeOneway(String addr, RemotingCommand request, long timeoutMillis) throws InterruptedException, RemotingConnectException, RemotingTooMuchRequestException, RemotingTimeoutException, RemotingSendRequestException {
         final ChannelFuture channelFuture = this.getAndCreateChannelAsync(addr);
         if (channelFuture == null) {
             throw new RemotingConnectException(addr);

@@ -497,8 +497,10 @@ public class BrokerOuterAPI {
         final BrokerIdentity brokerIdentity) {
 
         final List<RegisterBrokerResult> registerBrokerResultList = new CopyOnWriteArrayList<>();
+
+        // 获取所有Nameserver地址，逐一注册一遍
         List<String> nameServerAddressList = this.remotingClient.getAvailableNameSrvList();
-        if (nameServerAddressList != null && nameServerAddressList.size() > 0) {
+        if (nameServerAddressList != null && !nameServerAddressList.isEmpty()) {
 
             final RegisterBrokerRequestHeader requestHeader = new RegisterBrokerRequestHeader();
             requestHeader.setBrokerAddr(brokerAddr);
@@ -516,8 +518,11 @@ public class BrokerOuterAPI {
             requestBody.setTopicConfigSerializeWrapper(TopicConfigAndMappingSerializeWrapper.from(topicConfigWrapper));
             requestBody.setFilterServerList(filterServerList);
             final byte[] body = requestBody.encode(compressed);
+
+            // Crc
             final int bodyCrc32 = UtilAll.crc32(body);
             requestHeader.setBodyCrc32(bodyCrc32);
+
             final CountDownLatch countDownLatch = new CountDownLatch(nameServerAddressList.size());
             for (final String namesrvAddr : nameServerAddressList) {
                 brokerOuterExecutor.execute(new AbstractBrokerRunnable(brokerIdentity) {
@@ -556,8 +561,9 @@ public class BrokerOuterAPI {
         final int timeoutMills,
         final RegisterBrokerRequestHeader requestHeader,
         final byte[] body
-    ) throws RemotingCommandException, MQBrokerException, RemotingConnectException, RemotingSendRequestException, RemotingTimeoutException,
-        InterruptedException {
+    ) throws RemotingCommandException, MQBrokerException, RemotingConnectException, RemotingSendRequestException, RemotingTimeoutException, InterruptedException {
+
+        // 与Nameserver的指令交互统一接口，确定类型，根据类型来解析Body
         RemotingCommand request = RemotingCommand.createRequestCommand(RequestCode.REGISTER_BROKER, requestHeader);
         request.setBody(body);
 
@@ -703,8 +709,11 @@ public class BrokerOuterAPI {
         final TopicConfigSerializeWrapper topicConfigWrapper,
         final int timeoutMills,
         final boolean isInBrokerContainer) {
+
         final List<Boolean> changedList = new CopyOnWriteArrayList<>();
         List<String> nameServerAddressList = this.remotingClient.getNameServerAddressList();
+
+        // 逐一检查
         if (nameServerAddressList != null && nameServerAddressList.size() > 0) {
             final CountDownLatch countDownLatch = new CountDownLatch(nameServerAddressList.size());
             for (final String namesrvAddr : nameServerAddressList) {
@@ -719,9 +728,12 @@ public class BrokerOuterAPI {
                             requestHeader.setClusterName(clusterName);
                             RemotingCommand request = RemotingCommand.createRequestCommand(RequestCode.QUERY_DATA_VERSION, requestHeader);
                             request.setBody(topicConfigWrapper.getDataVersion().encode());
+
+                            // query
                             RemotingCommand response = remotingClient.invokeSync(namesrvAddr, request, timeoutMills);
                             DataVersion nameServerDataVersion = null;
                             Boolean changed = false;
+
                             switch (response.getCode()) {
                                 case ResponseCode.SUCCESS: {
                                     QueryDataVersionResponseHeader queryDataVersionResponseHeader =

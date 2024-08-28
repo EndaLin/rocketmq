@@ -43,8 +43,7 @@ public interface RemotingClient extends RemotingService {
         final InvokeCallback invokeCallback) throws InterruptedException, RemotingConnectException,
         RemotingTooMuchRequestException, RemotingTimeoutException, RemotingSendRequestException;
 
-    void invokeOneway(final String addr, final RemotingCommand request, final long timeoutMillis)
-        throws InterruptedException, RemotingConnectException, RemotingTooMuchRequestException,
+    void invokeOneway(final String addr, final RemotingCommand request, final long timeoutMillis) throws InterruptedException, RemotingConnectException, RemotingTooMuchRequestException,
         RemotingTimeoutException, RemotingSendRequestException;
 
     default CompletableFuture<RemotingCommand> invoke(final String addr, final RemotingCommand request,

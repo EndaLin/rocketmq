@@ -1737,6 +1737,7 @@ public class BrokerController {
                     BrokerController.LOG.error("registerBrokerAll Exception", e);
                 }
             }
+            // 延迟10s开始心跳，心跳间隔为[10s, 60s]
         }, 1000 * 10, Math.max(10000, Math.min(brokerConfig.getRegisterNameServerPeriod(), 60000)), TimeUnit.MILLISECONDS));
 
         if (this.brokerConfig.isEnableSlaveActingMaster()) {
@@ -1852,17 +1853,13 @@ public class BrokerController {
         ConcurrentHashMap<String, TopicConfig> topicConfigTable = new ConcurrentHashMap<>();
 
         for (TopicConfig topicConfig : topicConfigMap.values()) {
-            if (!PermName.isWriteable(this.getBrokerConfig().getBrokerPermission())
-                || !PermName.isReadable(this.getBrokerConfig().getBrokerPermission())) {
-                topicConfigTable.put(topicConfig.getTopicName(),
-                    new TopicConfig(topicConfig.getTopicName(), topicConfig.getReadQueueNums(), topicConfig.getWriteQueueNums(),
-                        topicConfig.getPerm() & getBrokerConfig().getBrokerPermission()));
+            if (!PermName.isWriteable(this.getBrokerConfig().getBrokerPermission()) || !PermName.isReadable(this.getBrokerConfig().getBrokerPermission())) {
+                topicConfigTable.put(topicConfig.getTopicName(), new TopicConfig(topicConfig.getTopicName(), topicConfig.getReadQueueNums(), topicConfig.getWriteQueueNums(), topicConfig.getPerm() & getBrokerConfig().getBrokerPermission()));
             } else {
                 topicConfigTable.put(topicConfig.getTopicName(), topicConfig);
             }
 
-            if (this.brokerConfig.isEnableSplitRegistration()
-                && topicConfigTable.size() >= this.brokerConfig.getSplitRegistrationSize()) {
+            if (this.brokerConfig.isEnableSplitRegistration() && topicConfigTable.size() >= this.brokerConfig.getSplitRegistrationSize()) {
                 TopicConfigAndMappingSerializeWrapper topicConfigWrapper = this.getTopicConfigManager().buildSerializeWrapper(topicConfigTable);
                 doRegisterBrokerAll(checkOrderConfig, oneway, topicConfigWrapper);
                 topicConfigTable.clear();
@@ -1875,12 +1872,15 @@ public class BrokerController {
 
         TopicConfigAndMappingSerializeWrapper topicConfigWrapper = this.getTopicConfigManager().
             buildSerializeWrapper(topicConfigTable, topicQueueMappingInfoMap);
-        if (this.brokerConfig.isEnableSplitRegistration() || forceRegister || needRegister(this.brokerConfig.getBrokerClusterName(),
-            this.getBrokerAddr(),
-            this.brokerConfig.getBrokerName(),
-            this.brokerConfig.getBrokerId(),
-            this.brokerConfig.getRegisterBrokerTimeoutMills(),
-            this.brokerConfig.isInBrokerContainer())) {
+        // forceRegister 开机强制注册
+        // needRegister 如果检测到任一一台Nameserver的配置与本地不符合，就会马上重新注册
+        if (this.brokerConfig.isEnableSplitRegistration() || forceRegister ||
+                needRegister(this.brokerConfig.getBrokerClusterName(),
+                        this.getBrokerAddr(),
+                        this.brokerConfig.getBrokerName(),
+                        this.brokerConfig.getBrokerId(),
+                        this.brokerConfig.getRegisterBrokerTimeoutMills(),
+                        this.brokerConfig.isInBrokerContainer())) {
             doRegisterBrokerAll(checkOrderConfig, oneway, topicConfigWrapper);
         }
     }
@@ -1994,7 +1994,8 @@ public class BrokerController {
         List<Boolean> changeList = brokerOuterAPI.needRegister(clusterName, brokerAddr, brokerName, brokerId, topicConfigWrapper, timeoutMills, isInBrokerContainer);
         boolean needRegister = false;
         for (Boolean changed : changeList) {
-            if (changed) {
+            if (Boolean.TRUE.equals(changed)) {
+                // 任意一台Nameserver的版本过旧都要出发重新检测
                 needRegister = true;
                 break;
             }
